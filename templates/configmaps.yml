@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+  namespace: {{ .Values.namespace }}
+data:
+{{ printf "environment/%s/configmap.yaml" .Values.global.env | .Files.Get | indent 2 }}
+  .env: |
+    PORT={{ .Values.configs.PORT }}
+    NODE_ENV={{ .Values.configs.NODE_ENV }}
+    DB_NAME={{ .Values.configs.DB_NAME }}
+    DB_USER={{ .Values.configs.DB_USER }}
+    DB_PASSWORD={{ .Values.configs.DB_PASSWORD }}
+    DB_URL={{ .Values.configs.DB_URL }}
+    DB_PASSWORD_LOG={{ .Values.configs.DB_PASSWORD_LOG }}
+    REDIS_HOST={{ .Values.configs.REDIS_HOST }}
+    REDIS_PORT={{ .Values.configs.REDIS_PORT }}
+    REDIS_PASSWORD={{ .Values.configs.REDIS_PASSWORD }}
+    REDIS_DB={{ .Values.configs.REDIS_DB }}

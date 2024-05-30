@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "application.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "application.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "application.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: app-env
+          configMap:
+            name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+            items:
+            - key: .env
+              path: .env
+        - name: shared-files
+          emptyDir: { }
+      serviceAccountName: {{ include "application.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: app-env
+              mountPath: /dist/.env
+              subPath: .env
+              readOnly: true
+            - name: shared-files
+              mountPath: /var/www/html
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: PORT
+
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: NODE_ENV
+
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: DB_NAME
+
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: DB_USER
+
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: DB_PASSWORD
+
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: DB_URL
+
+            - name: CACHE_STORE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: CACHE_STORE
+
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: REDIS_HOST
+
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: REDIS_PORT
+
+            - name: REDIS_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: REDIS_PASSWORD
+
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "application.fullname" . }}-{{ .Values.global.env }}
+                  key: REDIS_DB
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: http
+          readinessProbe:
+            tcpSocket:
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
