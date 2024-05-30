@@ -2,7 +2,7 @@
 
 This repository serves as a template for Continuous Deployment using Argo CD with Kubernetes. It demonstrates the GitOps process by deploying a sample application to a Kubernetes cluster. The template supports defining environment variables through both OS variables and a `.env` file in the target application.
 
-This template support 3 Deployment environments (develop - staging - production). You can consider more or less.
+This template support 3 Deployment environments (develop - staging - production). You can consider more or less according to company cycle software development.
 
 
 ## Features
